@@ -1,66 +1,61 @@
-use std::thread;
+use std::{
+    any::TypeId,
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
+
+use prelude::World;
+
+mod app;
 
 pub mod prelude {
+    pub use crate::app::*;
     pub use crate::*;
 }
 
-pub trait System: 'static + Send {
-    fn run(&mut self, ctx: Context);
-}
-
-impl<F: Fn(Context) + 'static + Send> System for F {
-    fn run(&mut self, ctx: Context) {
-        self(ctx);
+pub trait Component: 'static + Send {
+    fn get_type_id(&self) -> TypeId {
+        TypeId::of::<Self>()
     }
 }
 
-pub struct App {
-    systems: Vec<Box<dyn System>>,
+#[derive(Default)]
+pub struct EntityBuilder {
+    components: HashMap<TypeId, Box<dyn Component>>,
 }
 
-impl App {
+impl EntityBuilder {
     pub fn new() -> Self {
-        Self { systems: vec![] }
+        Self::default()
     }
 
-    pub fn add_system<F: System>(mut self, system: F) -> Self {
-        self.systems.push(Box::new(system));
+    pub fn with<T: Component>(mut self, component: T) -> Self {
+        self.components
+            .insert(TypeId::of::<T>(), Box::new(component));
         self
-    }
-
-    pub fn run(self) {
-        // TODO: Add scheduler w/ thread pool
-
-        // Run each system in a separate thread
-        let mut threads = vec![];
-        for mut system in self.systems {
-            threads.push(thread::spawn(move || system.run(Context::new())));
-        }
-
-        for thread in threads {
-            thread.join().expect("Unable to join thread");
-        }
-    }
-}
-
-impl Default for App {
-    fn default() -> Self {
-        Self::new()
     }
 }
 
 #[derive(Clone)]
-pub struct Context {}
-
-impl Context {
-    pub fn new() -> Self {
-        Self {}
-    }
+pub struct Context {
+    world: Arc<Mutex<World>>,
 }
 
-impl Default for Context {
-    fn default() -> Self {
-        Self::new()
+impl Context {
+    fn new(world: Arc<Mutex<World>>) -> Self {
+        Self { world }
+    }
+
+    pub fn spawn(&mut self, entity_builder: EntityBuilder) -> usize {
+        // Get lock on the world
+        let mut world = self.world.lock().expect("World mutex has been poisoned");
+
+        let entity_id = world.spawn_entity();
+        for (_, component) in entity_builder.components {
+            world.add_component_to_entity(entity_id, component);
+        }
+
+        entity_id
     }
 }
 
