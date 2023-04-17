@@ -5,7 +5,7 @@ use std::{
     thread,
 };
 
-use crate::{Component, Context};
+use crate::{context::Context, Component};
 
 pub trait System: 'static + Send {
     fn run(&mut self, ctx: Context);
@@ -15,11 +15,6 @@ impl<F: Fn(Context) + 'static + Send> System for F {
     fn run(&mut self, ctx: Context) {
         self(ctx);
     }
-}
-
-// Values stored by queries
-struct Entity<'e> {
-    components: Vec<&'e dyn Component>,
 }
 
 pub struct World {
@@ -60,6 +55,7 @@ impl World {
     }
 }
 
+// TODO: Add stages!!!
 pub struct App {
     world: Arc<Mutex<World>>,
     systems: Vec<Box<dyn System>>,

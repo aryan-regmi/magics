@@ -9,8 +9,6 @@ pub mod prelude {
     pub use crate::context::*;
     pub use crate::query::*;
     pub use crate::*;
-
-    pub use std::any::Any;
 }
 
 pub trait Component: 'static + Send {
@@ -19,13 +17,8 @@ pub trait Component: 'static + Send {
     }
 
     fn as_any(&self) -> &dyn Any;
-    fn as_any_mut(&mut self) -> &mut dyn Any;
 }
 
-fn concrete_component<T: Component>(component: &dyn Component) -> Option<&T> {
-    component.as_any().downcast_ref()
-}
-
-fn concrete_component_mut<T: Component>(component: &mut dyn Component) -> Option<&mut T> {
-    component.as_any_mut().downcast_mut()
+fn concrete_component<'e, T: Component>(obj: &dyn Component) -> Option<&'e T> {
+    (obj as &dyn Any).downcast_ref()
 }
