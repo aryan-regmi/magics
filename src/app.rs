@@ -34,11 +34,7 @@ impl World {
         entity
     }
 
-    pub(crate) fn add_component_to_entity<C: Component + Clone>(
-        &mut self,
-        entity: usize,
-        component: C,
-    ) {
+    pub(crate) fn add_component_to_entity<C: Component>(&mut self, entity: usize, component: C) {
         // If component vec already exists, just add the component at the entity index
         let type_id = component.get_type_id();
         if self.component_vecs.contains_key(&type_id) {

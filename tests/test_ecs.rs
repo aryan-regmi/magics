@@ -3,37 +3,37 @@ use magics::prelude::*;
 #[derive(Debug, Clone)]
 struct Health(u32);
 impl Component for Health {
-    fn as_any(&self) -> &dyn Any {
-        self as &dyn Any
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
+    // fn as_any(&self) -> &dyn Any {
+    //     self as &dyn Any
+    // }
+    //
+    // fn as_any_mut(&mut self) -> &mut dyn Any {
+    //     self
+    // }
 }
 
 #[derive(Debug, Clone)]
 struct Age(u32);
 impl Component for Age {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
+    // fn as_any(&self) -> &dyn Any {
+    //     self
+    // }
+    //
+    // fn as_any_mut(&mut self) -> &mut dyn Any {
+    //     self
+    // }
 }
 
 #[derive(Debug, Clone)]
 struct Name(&'static str);
 impl Component for Name {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
+    // fn as_any(&self) -> &dyn Any {
+    //     self
+    // }
+    //
+    // fn as_any_mut(&mut self) -> &mut dyn Any {
+    //     self
+    // }
 }
 
 fn system1(mut ctx: Context) {

@@ -18,8 +18,8 @@ pub trait Component: 'static + Send + std::fmt::Debug + Sync {
     fn get_type_id(&self) -> TypeId {
         TypeId::of::<Self>()
     }
-    fn as_any(&self) -> &dyn Any;
-    fn as_any_mut(&mut self) -> &mut dyn Any;
+    // fn as_any(&self) -> &dyn Any;
+    // fn as_any_mut(&mut self) -> &mut dyn Any;
 }
 
 // FIX: Remove Debug
@@ -29,7 +29,8 @@ pub(crate) trait ComponentVec: Send + std::fmt::Debug {
     fn as_any_mut(&mut self) -> &mut dyn Any;
 }
 
-impl<T: Component + Clone> ComponentVec for Vec<Option<T>> {
+// impl<T: Component + Clone> ComponentVec for Vec<Option<T>> {
+impl<T: Component> ComponentVec for Vec<Option<T>> {
     fn push_none(&mut self) {
         self.push(None);
     }

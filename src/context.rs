@@ -1,5 +1,6 @@
 use std::{
     any::TypeId,
+    slice::Iter,
     sync::{Arc, Mutex},
 };
 
@@ -36,7 +37,13 @@ pub struct QueryBuilder {
 }
 
 impl QueryBuilder {
-    pub fn with<T: Component + Clone>(mut self) -> Self {
+    pub fn new() -> Self {
+        Self {
+            component_types: vec![],
+        }
+    }
+
+    pub fn with<T: Component>(mut self) -> Self {
         self.component_types.push(TypeId::of::<T>());
         self
     }
@@ -46,8 +53,22 @@ impl QueryBuilder {
     }
 }
 
+impl Default for QueryBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub struct Query {
     _component_vecs: Box<dyn ComponentVec>,
+}
+
+impl Iterator for Query {
+    type Item = ();
+
+    fn next(&mut self) -> Option<Self::Item> {
+        todo!()
+    }
 }
 
 pub struct EntityBuilder {
@@ -56,7 +77,8 @@ pub struct EntityBuilder {
 }
 
 impl EntityBuilder {
-    pub fn with<T: Component + Clone>(self, component: T) -> Self {
+    // pub fn with<T: Component + Clone>(self, component: T) -> Self {
+    pub fn with<T: Component>(self, component: T) -> Self {
         self.ctx
             .world
             .lock()
