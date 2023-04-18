@@ -1,28 +1,24 @@
-use std::{
-    any::TypeId,
-    collections::HashMap,
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 
-use crate::{
-    prelude::{Query, QueryBuilder, World},
-    Component,
-};
+use crate::{prelude::World, Component};
 
-#[derive(Default)]
 pub struct EntityBuilder {
-    components: HashMap<TypeId, Arc<dyn Component>>,
+    id: usize,
+    ctx: Context,
 }
 
 impl EntityBuilder {
-    pub fn new() -> Self {
-        Self::default()
+    pub fn with<T: Component + Clone>(self, component: T) -> Self {
+        self.ctx
+            .world
+            .lock()
+            .expect("World mutex has been poisoned")
+            .add_component_to_entity(self.id, component);
+        self
     }
 
-    pub fn with<T: Component>(mut self, component: T) -> Self {
-        self.components
-            .insert(TypeId::of::<T>(), Arc::new(component));
-        self
+    pub fn build(self) -> usize {
+        self.id
     }
 }
 
@@ -36,19 +32,18 @@ impl Context {
         Self { world }
     }
 
-    pub fn spawn(&mut self, entity_builder: EntityBuilder) -> usize {
-        // Get lock on the world
-        let mut world = self.world.lock().expect("World mutex has been poisoned");
-
-        let entity_id = world.spawn_entity();
-        for (_, component) in entity_builder.components {
-            world.add_component_to_entity(entity_id, component);
+    pub fn spawn(&mut self) -> EntityBuilder {
+        EntityBuilder {
+            id: self
+                .world
+                .lock()
+                .expect("World mutex has been poisoned")
+                .spawn_entity(),
+            ctx: self.clone(),
         }
-
-        entity_id
     }
 
-    pub fn query(&mut self, query_builder: QueryBuilder) -> Query {
-        query_builder.build(Arc::clone(&self.world))
-    }
+    // pub fn query(&mut self, query_builder: QueryBuilder) -> Query {
+    //     query_builder.build(Arc::clone(&self.world))
+    // }
 }

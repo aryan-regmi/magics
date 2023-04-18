@@ -18,7 +18,6 @@ pub trait Component: 'static + Send + std::fmt::Debug + Sync {
     fn get_type_id(&self) -> TypeId {
         TypeId::of::<Self>()
     }
-
     fn as_any(&self) -> &dyn Any;
     fn as_any_mut(&mut self) -> &mut dyn Any;
 }
