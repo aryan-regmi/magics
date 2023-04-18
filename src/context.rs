@@ -1,6 +1,5 @@
 use std::{
     any::TypeId,
-    slice::Iter,
     sync::{Arc, Mutex},
 };
 
@@ -63,8 +62,16 @@ pub struct Query {
     _component_vecs: Box<dyn ComponentVec>,
 }
 
+pub struct Entity {}
+
+impl Entity {
+    pub fn get_component<T>(&self) -> Option<T> {
+        todo!()
+    }
+}
+
 impl Iterator for Query {
-    type Item = ();
+    type Item = Entity;
 
     fn next(&mut self) -> Option<Self::Item> {
         todo!()

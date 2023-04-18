@@ -29,8 +29,8 @@ fn test_stages() {
     // stage1_func1 and stage1_func2 run independent of any other system in their stage
 
     App::new()
-        .add_stage(Stage::new(0).with(setup))
-        .add_stage(Stage::new(1).with(stage1_func1).with(stage1_func2))
+        .add_stage(Stage::run_order(0).with(setup))
+        .add_stage(Stage::run_order(1).with(stage1_func1).with(stage1_func2))
         .add_system(free_system1)
         .add_system(free_system2)
         .run();

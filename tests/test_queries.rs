@@ -25,8 +25,22 @@ fn setup(mut ctx: Context) {
 }
 
 fn get_names(mut ctx: Context) {
-    let names = ctx.query(QueryBuilder::new().with::<Name>());
+    let mut names = ctx.query(QueryBuilder::new().with::<Name>());
+
+    assert_eq!(
+        names.next().unwrap().get_component::<Name>().unwrap().0,
+        "NPC"
+    );
+    assert_eq!(
+        names.next().unwrap().get_component::<Name>().unwrap().0,
+        "Player"
+    );
 }
 
 #[test]
-fn can_query_single_component() {}
+fn can_query_single_component() {
+    App::new()
+        .add_stage(Stage::run_order(0).with(setup))
+        .add_stage(Stage::run_order(1).with(get_names))
+        .run();
+}

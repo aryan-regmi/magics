@@ -70,7 +70,7 @@ pub struct Stage {
 }
 
 impl Stage {
-    pub fn new(idx: usize) -> Self {
+    pub fn run_order(idx: usize) -> Self {
         Self {
             idx,
             systems: vec![],
