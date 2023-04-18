@@ -1,15 +1,27 @@
+use std::sync::Mutex;
+
 use magics::prelude::*;
 
+static MVAL: Mutex<u8> = Mutex::new(0);
+
 fn setup(_ctx: Context) {
+    let mut mval = MVAL.lock().unwrap();
+    assert_eq!(*mval, 0);
+
+    *mval = 1;
+    drop(mval);
+
     println!("Setup");
 }
 
 fn stage1_func1(_ctx: Context) {
     println!("F1");
+    assert_eq!(*MVAL.lock().unwrap(), 1);
 }
 
 fn stage1_func2(_ctx: Context) {
     println!("F2");
+    assert_eq!(*MVAL.lock().unwrap(), 1);
 }
 
 fn free_system1(_ctx: Context) {
