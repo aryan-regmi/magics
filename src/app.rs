@@ -17,7 +17,7 @@ impl<F: Fn(Context) + 'static + Send> System for F {
     }
 }
 
-pub struct World {
+pub(crate) struct World {
     num_entities: usize,
     pub(crate) component_vecs: HashMap<TypeId, Box<dyn ComponentVec>>,
 }
