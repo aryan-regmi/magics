@@ -11,7 +11,7 @@ use crate::{
 
 #[derive(Default)]
 pub struct EntityBuilder {
-    components: HashMap<TypeId, Box<dyn Component>>,
+    components: HashMap<TypeId, Arc<dyn Component>>,
 }
 
 impl EntityBuilder {
@@ -21,7 +21,7 @@ impl EntityBuilder {
 
     pub fn with<T: Component>(mut self, component: T) -> Self {
         self.components
-            .insert(TypeId::of::<T>(), Box::new(component));
+            .insert(TypeId::of::<T>(), Arc::new(component));
         self
     }
 }
@@ -49,6 +49,6 @@ impl Context {
     }
 
     pub fn query(&mut self, query_builder: QueryBuilder) -> Query {
-        query_builder.build(Arc::clone(&self.world))
+        query_builder.build(self.world.lock().expect("World mutex was poisoned"))
     }
 }

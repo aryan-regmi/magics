@@ -14,19 +14,11 @@ pub mod prelude {
 }
 
 // FIXME: Remove Debug
-pub trait Component: 'static + Send + std::fmt::Debug {
+pub trait Component: 'static + Send + std::fmt::Debug + Sync {
     fn get_type_id(&self) -> TypeId {
         TypeId::of::<Self>()
     }
 
     fn as_any(&self) -> &dyn Any;
     fn as_any_mut(&mut self) -> &mut dyn Any;
-}
-
-fn concrete_component<T: Component>(component: &dyn Component) -> Option<&T> {
-    component.as_any().downcast_ref()
-}
-
-fn concrete_component_mut<T: Component>(component: &mut dyn Component) -> Option<&mut T> {
-    component.as_any_mut().downcast_mut()
 }
