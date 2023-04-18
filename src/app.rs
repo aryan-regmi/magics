@@ -1,11 +1,11 @@
 use std::{
-    any::{Any, TypeId},
+    any::TypeId,
     collections::HashMap,
     sync::{Arc, Mutex},
     thread,
 };
 
-use crate::{context::Context, Component};
+use crate::{context::Context, Component, ComponentVec};
 
 pub trait System: 'static + Send {
     fn run(&mut self, ctx: Context);
@@ -14,26 +14,6 @@ pub trait System: 'static + Send {
 impl<F: Fn(Context) + 'static + Send> System for F {
     fn run(&mut self, ctx: Context) {
         self(ctx);
-    }
-}
-
-// FIX: Remove Debug
-pub(crate) trait ComponentVec: Send + std::fmt::Debug {
-    fn push_none(&mut self);
-    fn as_any(&self) -> &dyn Any;
-    fn as_any_mut(&mut self) -> &mut dyn Any;
-}
-impl<T: Component + Clone> ComponentVec for Vec<Option<T>> {
-    fn push_none(&mut self) {
-        self.push(None);
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
     }
 }
 
@@ -84,10 +64,33 @@ impl World {
     }
 }
 
-// TODO: Add stages!!!
+pub struct StageManager {
+    stages: Vec<Stage>,
+}
+
+pub struct Stage {
+    idx: usize,
+    systems: Vec<Box<dyn System>>,
+}
+
+impl Stage {
+    pub fn new(idx: usize) -> Self {
+        Self {
+            idx,
+            systems: vec![],
+        }
+    }
+
+    pub fn with<F: System>(mut self, system: F) -> Self {
+        self.systems.push(Box::new(system));
+        self
+    }
+}
+
 pub struct App {
     world: Arc<Mutex<World>>,
     systems: Vec<Box<dyn System>>,
+    stage_manager: StageManager,
 }
 
 impl App {
@@ -98,6 +101,7 @@ impl App {
                 num_entities: 0,
             })),
             systems: vec![],
+            stage_manager: StageManager { stages: vec![] },
         }
     }
 
@@ -106,8 +110,13 @@ impl App {
         self
     }
 
-    pub fn run(self) {
-        // TODO: Add scheduler w/ thread pool
+    pub fn add_stage(mut self, stage: Stage) -> Self {
+        self.stage_manager.stages.push(stage);
+        self
+    }
+
+    pub fn run(mut self) {
+        // TODO: Add scheduler w/ thread pool & premptive work stealing queue
 
         // Run each system in a separate thread
         let mut threads = vec![];
@@ -115,6 +124,26 @@ impl App {
             let world = Arc::clone(&self.world);
             threads.push(thread::spawn(move || system.run(Context::new(world))));
         }
+
+        // Run each stage sequentially, but run all systems inside the stage in parallel
+        let world = Arc::clone(&self.world);
+        self.stage_manager.stages.sort_by(|a, b| a.idx.cmp(&b.idx));
+        threads.push(thread::spawn(move || {
+            for stage in self.stage_manager.stages {
+                // Run each system in a separate thread
+                let mut threads = vec![];
+                for mut sys in stage.systems {
+                    let world = Arc::clone(&world);
+                    threads.push(thread::spawn(move || sys.run(Context::new(world))));
+                }
+
+                // NOTE: All systems in a stage are joined before running the next stage i.e the next
+                // stage only runs after all the systems of the current stage are finished.
+                for thread in threads {
+                    thread.join().expect("Unable to join thread");
+                }
+            }
+        }));
 
         for thread in threads {
             thread.join().expect("Unable to join thread");

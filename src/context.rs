@@ -1,26 +1,9 @@
-use std::sync::{Arc, Mutex};
+use std::{
+    any::TypeId,
+    sync::{Arc, Mutex},
+};
 
-use crate::{prelude::World, Component};
-
-pub struct EntityBuilder {
-    id: usize,
-    ctx: Context,
-}
-
-impl EntityBuilder {
-    pub fn with<T: Component + Clone>(self, component: T) -> Self {
-        self.ctx
-            .world
-            .lock()
-            .expect("World mutex has been poisoned")
-            .add_component_to_entity(self.id, component);
-        self
-    }
-
-    pub fn build(self) -> usize {
-        self.id
-    }
-}
+use crate::{prelude::World, Component, ComponentVec};
 
 #[derive(Clone)]
 pub struct Context {
@@ -43,7 +26,46 @@ impl Context {
         }
     }
 
-    // pub fn query(&mut self, query_builder: QueryBuilder) -> Query {
-    //     query_builder.build(Arc::clone(&self.world))
-    // }
+    pub fn query(&mut self, query_builder: QueryBuilder) -> Query {
+        query_builder.build()
+    }
+}
+
+pub struct QueryBuilder {
+    component_types: Vec<TypeId>,
+}
+
+impl QueryBuilder {
+    pub fn with<T: Component + Clone>(mut self) -> Self {
+        self.component_types.push(TypeId::of::<T>());
+        self
+    }
+
+    fn build(self) -> Query {
+        todo!()
+    }
+}
+
+pub struct Query {
+    _component_vecs: Box<dyn ComponentVec>,
+}
+
+pub struct EntityBuilder {
+    id: usize,
+    ctx: Context,
+}
+
+impl EntityBuilder {
+    pub fn with<T: Component + Clone>(self, component: T) -> Self {
+        self.ctx
+            .world
+            .lock()
+            .expect("World mutex has been poisoned")
+            .add_component_to_entity(self.id, component);
+        self
+    }
+
+    pub fn build(self) -> usize {
+        self.id
+    }
 }
