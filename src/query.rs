@@ -3,8 +3,11 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use itertools::{concat, Itertools};
+
 use crate::{concrete_component, concrete_component_mut, prelude::World, Component};
 
+#[derive(Debug)]
 // Values stored by queries
 pub struct Entity<'e> {
     components: Vec<&'e dyn Component>,
@@ -63,22 +66,81 @@ impl QueryBuilder {
     pub(crate) fn build<'e>(self, world: Arc<Mutex<World>>) -> Query<'e> {
         // Get lock on the world
         let world = world.lock().expect("World mutex has been poisoned");
+        let num_components = self.components.len();
 
         // Get all components that have 'Some'
-        let mut immutable_components = vec![];
+        let mut valid_component_vecs = vec![];
+        let mut min_components = usize::max_value();
         for component in self.components {
             if world.component_vecs.contains_key(&component) {
-                // Grab all `Some` components from each of the vectors
                 let component_vec = world.component_vecs.get(&component).unwrap();
-                let mut filtered_components = component_vec
+                let some_components = component_vec
                     .iter()
-                    .filter_map(|c| c.as_ref())
+                    .enumerate()
+                    .filter(|(_, c)| c.is_some())
+                    .map(|(i, c)| (i, c.as_ref().unwrap()))
                     .collect::<Vec<_>>();
-                immutable_components.append(&mut filtered_components);
+
+                if min_components > some_components.len() {
+                    min_components = some_components.len();
+                }
+
+                valid_component_vecs.push(some_components);
             }
         }
+        let valid_components = concat(valid_component_vecs)
+            .into_iter()
+            .sorted_by(|a, b| Ord::cmp(&a.0, &b.0))
+            .collect::<Vec<_>>();
 
+        let mut entities = (0..min_components)
+            .into_iter()
+            .map(|_| Entity {
+                components: vec![],
+                mutable_components: vec![],
+            })
+            .collect::<Vec<_>>();
+        let mut entity_idx = 0;
+        let mut last_index = valid_components[0].0;
+        for (i, component) in valid_components {
+            // If the component in valid_components belongs to the same entity as before, then add
+            // the component to the entity
+            if last_index == i {
+                let mut entity = Entity {
+                    components: vec![],
+                    mutable_components: vec![],
+                };
+
+                entity.components.push(&**component);
+
+                entities[entity_idx] = entity;
+            } else {
+                entity_idx += 1;
+            }
+
+            last_index = i;
+        }
+
+        dbg!(&entities);
+
+        let query_entities = entities
+            .into_iter()
+            .filter(|v| v.components.len() == num_components)
+            .collect::<Vec<_>>();
+
+        dbg!(&query_entities);
+
+        // Query {
+        //     entities: query_entities,
+        // }
         todo!()
+
+        // Query {
+        //     entities: entities
+        //         .into_iter()
+        //         .filter(|v| v.components.len() == num_components)
+        //         .collect(),
+        // }
     }
 }
 

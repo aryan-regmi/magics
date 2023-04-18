@@ -1,5 +1,6 @@
 use magics::prelude::*;
 
+#[derive(Debug)]
 struct Health(u32);
 impl Component for Health {
     fn as_any(&self) -> &dyn Any {
@@ -11,6 +12,7 @@ impl Component for Health {
     }
 }
 
+#[derive(Debug)]
 struct Age(u32);
 impl Component for Age {
     fn as_any(&self) -> &dyn Any {
@@ -22,6 +24,7 @@ impl Component for Age {
     }
 }
 
+#[derive(Debug)]
 struct Name(&'static str);
 impl Component for Name {
     fn as_any(&self) -> &dyn Any {

@@ -13,7 +13,8 @@ pub mod prelude {
     pub use std::any::Any;
 }
 
-pub trait Component: 'static + Send {
+// FIXME: Remove Debug
+pub trait Component: 'static + Send + std::fmt::Debug {
     fn get_type_id(&self) -> TypeId {
         TypeId::of::<Self>()
     }
