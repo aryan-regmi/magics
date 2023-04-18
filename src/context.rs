@@ -49,6 +49,6 @@ impl Context {
     }
 
     pub fn query(&mut self, query_builder: QueryBuilder) -> Query {
-        query_builder.build(self.world.lock().expect("World mutex was poisoned"))
+        query_builder.build(Arc::clone(&self.world))
     }
 }

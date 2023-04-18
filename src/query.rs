@@ -5,36 +5,21 @@ use std::{
 
 use itertools::{concat, Itertools};
 
-use crate::{concrete_component, concrete_component_mut, prelude::World, Component};
+use crate::{prelude::World, Component};
 
 #[derive(Debug)]
 // Values stored by queries
 pub struct Entity<'e> {
     components: Vec<&'e dyn Component>,
-    mutable_components: Vec<&'e mut dyn Component>,
 }
 
 impl<'e> Entity<'e> {
     pub fn get<C: Component>(&'e self) -> Option<&C> {
-        for component in &self.components {
-            if component.get_type_id() == TypeId::of::<C>() {
-                let concerete = concrete_component::<C>(*component);
-                return concerete;
-            }
-        }
-
-        None
+        todo!()
     }
 
     pub fn get_mut<C: Component>(&'e mut self) -> Option<&mut C> {
-        for component in &mut self.mutable_components {
-            if component.get_type_id() == TypeId::of::<C>() {
-                let concerete = concrete_component_mut::<C>(*component);
-                return concerete;
-            }
-        }
-
-        None
+        todo!()
     }
 }
 
@@ -93,54 +78,34 @@ impl QueryBuilder {
             .sorted_by(|a, b| Ord::cmp(&a.0, &b.0))
             .collect::<Vec<_>>();
 
-        let mut entities = (0..min_components)
-            .into_iter()
-            .map(|_| Entity {
-                components: vec![],
-                mutable_components: vec![],
-            })
-            .collect::<Vec<_>>();
+        let mut entities: Vec<Entity> = vec![];
         let mut entity_idx = 0;
-        let mut last_index = valid_components[0].0;
+        let mut last_index = usize::max_value();
         for (i, component) in valid_components {
             // If the component in valid_components belongs to the same entity as before, then add
             // the component to the entity
             if last_index == i {
-                let mut entity = Entity {
-                    components: vec![],
-                    mutable_components: vec![],
-                };
-
-                entity.components.push(&**component);
-
-                entities[entity_idx] = entity;
+                entities[entity_idx].components.push(&**component);
             } else {
+                let mut entity = Entity { components: vec![] };
+                entity.components.push(&**component);
+                entities.push(entity);
+
                 entity_idx += 1;
             }
 
             last_index = i;
         }
 
-        dbg!(&entities);
-
         let query_entities = entities
             .into_iter()
             .filter(|v| v.components.len() == num_components)
             .collect::<Vec<_>>();
 
-        dbg!(&query_entities);
-
         // Query {
         //     entities: query_entities,
         // }
         todo!()
-
-        // Query {
-        //     entities: entities
-        //         .into_iter()
-        //         .filter(|v| v.components.len() == num_components)
-        //         .collect(),
-        // }
     }
 }
 
